@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quay Số May Mắn Đầu Năm</title>
+    <title>Quay Số May Mắn</title>
     <style>
         :root { --gold: #ffd700; --red: #d40000; }
         body {
@@ -16,55 +16,63 @@
         }
 
         .header-title {
-            font-size: 3.5rem; color: var(--gold);
-            font-weight: bold; text-align: center;
-            margin-top: 30px;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 20px var(--gold);
+            font-size: 3rem; color: var(--gold); font-weight: bold;
+            text-align: center; margin-top: 20px;
+            text-shadow: 2px 2px 10px #000, 0 0 20px var(--gold);
             animation: luckyGlow 1.5s infinite alternate;
         }
 
-        @keyframes luckyGlow {
-            from { transform: scale(1); text-shadow: 0 0 10px var(--gold); }
-            to { transform: scale(1.05); text-shadow: 0 0 30px #fff; }
-        }
+        @keyframes luckyGlow { from { transform: scale(1); } to { transform: scale(1.03); } }
 
         #setup-panel {
             background: rgba(255, 255, 255, 0.9);
-            padding: 15px 25px; border-radius: 10px;
-            margin-top: 20px; z-index: 100;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            padding: 10px 20px; border-radius: 10px; margin-top: 10px; z-index: 100;
         }
 
-        .wheels-container { display: flex; gap: 30px; margin-top: 50px; }
-        .wheel-box {
+        .wheels-wrapper { display: flex; gap: 40px; margin-top: 40px; }
+        
+        .wheel-container {
             display: flex; flex-direction: column; align-items: center;
-            background: rgba(0, 0, 0, 0.7); padding: 25px;
-            border-radius: 20px; border: 3px solid var(--gold);
+            position: relative;
         }
 
-        .wheel-label { color: white; margin-bottom: 15px; font-weight: bold; font-size: 1.2rem; }
-        .display-num {
-            font-size: 7rem; color: var(--gold);
-            background: linear-gradient(180deg, #111, #333);
-            width: 120px; height: 160px;
-            display: flex; justify-content: center; align-items: center;
-            border-radius: 15px; border: 5px solid var(--gold);
-            margin-bottom: 20px; font-family: 'Courier New', monospace;
+        /* Vòng quay */
+        .canvas-container {
+            position: relative;
+            width: 220px; height: 220px;
+            border: 8px solid var(--gold);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: #fff;
         }
 
+        /* Kim chỉ */
+        .pointer {
+            position: absolute; top: -15px; left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid var(--red);
+            z-index: 10;
+        }
+
+        canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+
+        .wheel-label { color: white; margin-bottom: 10px; font-weight: bold; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; }
+        
         button {
-            padding: 12px 25px; cursor: pointer;
-            background: var(--red); color: white;
-            border: 2px solid var(--gold); border-radius: 8px;
-            font-weight: bold; font-size: 1rem; transition: 0.2s;
+            margin-top: 15px; padding: 8px 20px; cursor: pointer;
+            background: var(--red); color: white; border: 2px solid var(--gold);
+            border-radius: 5px; font-weight: bold;
         }
-        button:hover { background: #ff0000; transform: translateY(-3px); }
-        .btn-all { margin-top: 40px; padding: 20px 60px; font-size: 2rem; border-radius: 50px; }
+
+        .btn-all { margin-top: 40px; padding: 15px 50px; font-size: 1.8rem; border-radius: 50px; cursor: pointer; background: var(--red); color: gold; border: 4px solid gold; box-shadow: 0 0 20px gold; }
 
         #result-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); justify-content: center; align-items: center;
-            z-index: 1000; text-align: center;
+            z-index: 1000; text-align: center; color: var(--gold);
         }
     </style>
 </head>
@@ -73,17 +81,14 @@
     <div class="header-title">QUAY SỐ MAY MẮN ĐẦU NĂM</div>
 
     <div id="setup-panel">
-        Số vòng: <select id="num-wheels">
-            <option value="2">2 Vòng (Chục, Đơn vị)</option>
-            <option value="3">3 Vòng (Trăm, Chục, Đơn vị)</option>
-        </select>
-        Loại trừ: <input type="text" id="exclude-nums" placeholder="44,78...">
+        Vòng quay: <select id="num-wheels"><option value="2">2 Vòng</option><option value="3">3 Vòng</option></select>
+        Số nan: <input type="number" id="num-segments" value="10" style="width: 40px;">
+        Loại trừ: <input type="text" id="exclude-nums" placeholder="44,78">
         <button onclick="initApp()">BẮT ĐẦU</button>
     </div>
 
-    <div style="margin-top: 20px; color: gold; font-weight: bold;">
-        GIẢI ĐANG QUAY: 
-        <select id="current-prize" style="font-size: 1.2rem;">
+    <div style="margin-top: 15px;">
+        <select id="current-prize" style="font-size: 1.2rem; padding: 5px; color: #d40000; font-weight: bold;">
             <option value="Giải Khuyến Khích">Giải Khuyến Khích</option>
             <option value="Giải Ba">Giải Ba</option>
             <option value="Giải Nhì">Giải Nhì</option>
@@ -91,139 +96,35 @@
         </select>
     </div>
 
-    <div class="wheels-container" id="main-ui"></div>
+    <div class="wheels-wrapper" id="main-ui"></div>
 
     <button class="btn-all" onclick="spinAll()">QUAY TẤT CẢ</button>
 
-    <div id="result-overlay" onclick="closeResult()">
+    <div id="result-overlay" onclick="this.style.display='none'">
         <div>
-            <h1 id="result-text" style="color: var(--gold); font-size: 3rem;"></h1>
-            <p style="color: white;">(Nhấn vào màn hình để tiếp tục)</p>
+            <h1 id="result-text"></h1>
+            <p style="color: white;">(Nhấn để đóng)</p>
         </div>
     </div>
 
     <script>
         let config = {
             wheels: 2,
+            segments: 10,
             exclude: [],
-            isSpinning: false,
-            riggedBuffer: "", 
-            results: [] // Lưu kết quả hiện tại của các vòng
+            riggedBuffer: "",
+            currentRotations: [],
+            results: []
         };
 
-        // Ghi nhận tín hiệu gõ ngầm
+        // Ghi nhận mã hack ngầm
         window.addEventListener('keydown', (e) => {
             if (e.key >= '0' && e.key <= '9') {
                 config.riggedBuffer += e.key;
-                if (config.riggedBuffer.length > config.wheels) {
-                    config.riggedBuffer = config.riggedBuffer.slice(-config.wheels);
-                }
+                if (config.riggedBuffer.length > config.wheels) config.riggedBuffer = config.riggedBuffer.slice(-config.wheels);
             }
-            if (e.code === 'AltRight' || e.key === 'AltGraph') {
-                config.riggedBuffer = ""; // Reset thủ công nếu cần
-            }
+            if (e.code === 'AltRight' || e.key === 'AltGraph') config.riggedBuffer = "";
         });
 
         function initApp() {
             config.wheels = parseInt(document.getElementById('num-wheels').value);
-            config.exclude = document.getElementById('exclude-nums').value.split(',').map(n => n.trim());
-            config.results = new Array(config.wheels).fill(null);
-            
-            const container = document.getElementById('main-ui');
-            container.innerHTML = '';
-            
-            let labels = config.wheels === 3 ? ['Hàng Trăm', 'Hàng Chục', 'Hàng Đơn Vị'] : ['Hàng Chục', 'Hàng Đơn Vị'];
-
-            labels.forEach((label, i) => {
-                container.innerHTML += `
-                    <div class="wheel-box">
-                        <div class="wheel-label">${label}</div>
-                        <div class="display-num" id="wheel-${i}">0</div>
-                        <button onclick="spinSingle(${i})">QUAY</button>
-                    </div>`;
-            });
-            document.getElementById('setup-panel').style.display = 'none';
-        }
-
-        async function spinSingle(index) {
-            if(config.isSpinning) return;
-            const el = document.getElementById(`wheel-${index}`);
-            
-            let count = 0;
-            const timer = setInterval(() => {
-                el.innerText = Math.floor(Math.random() * 10);
-                count++;
-                if(count > 20) {
-                    clearInterval(timer);
-                    // Quyết định số cuối cùng
-                    let finalDigit;
-                    if (config.riggedBuffer.length === config.wheels) {
-                        finalDigit = config.riggedBuffer[index];
-                    } else {
-                        finalDigit = Math.floor(Math.random() * 10);
-                    }
-                    
-                    el.innerText = finalDigit;
-                    config.results[index] = finalDigit;
-                    checkAutoFinish();
-                }
-            }, 50);
-        }
-
-        async function spinAll() {
-            if(config.isSpinning) return;
-            config.isSpinning = true;
-
-            for(let i = 0; i < config.wheels; i++) {
-                const el = document.getElementById(`wheel-${i}`);
-                await new Promise(res => {
-                    let count = 0;
-                    const timer = setInterval(() => {
-                        el.innerText = Math.floor(Math.random() * 10);
-                        count++;
-                        if(count > 20 + (i*10)) {
-                            clearInterval(timer);
-                            let digit = (config.riggedBuffer.length === config.wheels) ? config.riggedBuffer[i] : Math.floor(Math.random() * 10);
-                            el.innerText = digit;
-                            config.results[i] = digit;
-                            res();
-                        }
-                    }, 50);
-                });
-            }
-            checkAutoFinish(true);
-            config.isSpinning = false;
-        }
-
-        function checkAutoFinish(isForce = false) {
-            // Kiểm tra xem tất cả các vòng đã có kết quả chưa
-            if (!config.results.includes(null)) {
-                const finalNum = config.results.join('');
-                
-                if (config.exclude.includes(finalNum)) {
-                    alert("Số " + finalNum + " bị loại trừ!");
-                    config.results = new Array(config.wheels).fill(null);
-                } else {
-                    showWinner(finalNum);
-                }
-                // TỰ ĐỘNG XÓA HACK SAU KHI XONG
-                config.riggedBuffer = ""; 
-            }
-        }
-
-        function showWinner(num) {
-            const prize = document.getElementById('current-prize').value;
-            const overlay = document.getElementById('result-overlay');
-            const text = document.getElementById('result-text');
-            text.innerHTML = `CHÚC MỪNG SỐ <br><span style="font-size: 12rem; text-shadow: 0 0 30px white;">${num}</span><br> ĐÃ ĐẠT ${prize.toUpperCase()}`;
-            overlay.style.display = 'flex';
-        }
-
-        function closeResult() {
-            document.getElementById('result-overlay').style.display = 'none';
-            // Reset kết quả để quay lượt mới
-            config.results = new Array(config.wheels).fill(null);
-        }
-    </script>
-</body>
-</html>
